@@ -6,7 +6,7 @@
 	"scripts": {
 		"start": "electron .",
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"build": "electron-packager ."
+		"build": "electron-packager . --out=bin --overwrite"
 	},
 	"productName": "Student Group Entry",
 	"author": "Will Riley",
