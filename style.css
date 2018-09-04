@@ -1,0 +1,63 @@
+body {
+  display: none;
+}
+
+input {
+  margin-bottom: 20px;
+}
+
+.horizontalButton {
+  margin-right: 10px;
+}
+
+#foundStudents {
+  margin-bottom: 10px;
+}
+
+td, th {
+  padding: 5px;
+  text-align: left;
+}
+
+input.selectFoundStudent {
+  margin-bottom: 0px;
+}
+
+#leftColumn {
+  float:left;
+  width: 30%;
+}
+
+#rightColumn {
+  float: right;
+  width: 70%;
+}
+
+.grouplistelement {
+  margin-bottom: 20px;
+  margin-right: 20px;
+  float: left;
+  background: lightgrey;
+  width: 40%;
+}
+
+.grouplistelement table {
+  clear: both;
+}
+
+#studentDescription {
+  margin-bottom: 10px;
+}
+
+.groupId {
+  float:left;
+  margin-left: 5px;
+  margin-top: 5px;
+  font-weight: bold;
+  font-size: 115%;
+}
+.groupMemberCount {
+  margin: 5px;
+  float: right;
+  font-size: 90%;
+}

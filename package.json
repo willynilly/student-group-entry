@@ -1,0 +1,24 @@
+{
+	"name": "student-group-entry",
+	"version": "1.0.0",
+	"description": "Facilitates data entry for student group data.",
+	"main": "main.js",
+	"scripts": {
+		"start": "electron .",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "electron-packager ."
+	},
+	"productName": "Student Group Entry",
+	"author": "Will Riley",
+	"license": "ISC",
+	"devDependencies": {
+		"electron": "^2.0.8"
+	},
+	"dependencies": {
+		"csvtojson": "^2.0.8",
+		"jquery": "^3.3.1",
+		"jsonfile": "^4.0.0",
+		"lodash": "^4.17.10",
+		"random-name": "^0.1.2"
+	}
+}

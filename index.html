@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Student Group Entry</title>
+      <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+      <script>window.$ = window.jQuery = require('jquery');</script>
+      <script> require('./render.js') </script>
+
+      <div id="leftColumn">
+      <div id="studentInfo">
+      <h1>Student Info</h1>
+      <div>
+        <label>Student Id</label><br/>
+        <input id="studentId" type="text"></input>
+        <button id="gotoStudent">Goto Student</button>
+      </div>
+      <div id="studentDescription"></div>
+      <div id="studentIssues"><div><label>Data Issues:</label></div><textarea></textarea></div>
+     </div>
+
+      <div id="addToGroup">
+        <h2>Add to Group</h2>
+        <div>
+          <label>Student Name</label><br/>
+          <input id="searchStudentName" type="text"></input>
+          <button class="horizontalButton" id="findStudent">Search</button>
+        </div>
+
+        <div id="foundStudents"></div>
+
+        <div id="targetGroupSection">
+          <label>Group</label><br/>
+          <input id="toGroup" type="text"></input>
+          <button class="horizontalButton" id="addStudentToGroup">Add Student To Group</button>
+        </div>
+      </div>
+    </div>
+    <div id="rightColumn">
+      <div id="groups">
+        <h2>Groups</h2>
+        <div id="grouplist"></div>
+      </div>
+    </div>
+    </body>
+  </html>
