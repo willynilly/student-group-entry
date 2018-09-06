@@ -5,6 +5,7 @@ const ipcRenderer = require('electron').ipcRenderer;
 
 const path = require('path');
 const randomName = require('random-name');
+const { onTextChange, onEnter } = require('./ui_helpers.js');
 
 // const csv = require('csvtojson');
 // const fs = require('fs')
@@ -18,14 +19,8 @@ let student = null;
 
 function start () {
   $().ready(() => {
-    onEnter('#studentId', gotoStudent)
-    $('#gotoStudent').click(gotoStudent)
-    onEnter('#searchStudentName', findStudent)
-    $('#findStudent').click(findStudent)
 
-    onEnter('#toGroup', addStudentToGroup);
-    $('#addStudentToGroup').click(addStudentToGroup);
-    onTextChange('#studentIssues textarea', saveStudentIssues);
+    configureFormElements();
 
     $('body').hide();
 
@@ -35,24 +30,47 @@ function start () {
     $(window).on('beforeunload ', onWindowClose);
 
     // configure menus
-    ipcRenderer.on('loadstudents', function (event) {
-      let openFileOptions = {
-        filters: [
-          {name: 'JSON', extensions: ['json']}
-        ]
-      };
-      dialog.showOpenDialog(openFileOptions, loadStudents)
-    });
-
-    ipcRenderer.on('about', function (event) {
-      dialog.showMessageBox({
-          title: 'About',
-          message: 'This application helps researchers enter sociometric data about groups.  It was created by Will Riley.'
-      });
-    });
-
+    configureMenus();
 
   })
+}
+
+function configureFormElements() {
+  onEnter($, '#studentId', gotoStudent)
+  $('#gotoStudent').click(gotoStudent)
+  onEnter($, '#searchStudentName', findStudent)
+  $('#findStudent').click(findStudent)
+
+  onEnter($, '#toGroup', addStudentToGroup);
+  $('#addStudentToGroup').click(addStudentToGroup);
+  onTextChange($, '#studentIssues textarea', saveStudentIssues);
+}
+
+function configureMenus() {
+  ipcRenderer.on('loadstudents', function (event) {
+    let openFileOptions = {
+      title: 'Select Student Data JSON File',
+      filters: [
+        {name: 'JSON', extensions: ['json']}
+      ]
+    };
+    dialog.showOpenDialog(openFileOptions, loadStudents)
+  });
+
+  ipcRenderer.on('about', function (event) {
+    dialog.showMessageBox({
+        title: 'About',
+        message: 'This application helps researchers enter sociometric data about groups.  It was created by Will Riley.'
+    });
+  });
+
+  ipcRenderer.on('exportsamegroupvectors', function (event) {
+    let openFileOptions = {
+      title: 'Select Folder For Exporting Same Group Vectors',
+      properties: ['openDirectory', 'createDirectory']
+    };
+    dialog.showOpenDialog(openFileOptions, exportSameGroupVectors)
+  });
 }
 
 function initializeView() {
@@ -66,25 +84,6 @@ function initializeView() {
 
 function onWindowClose() {
   saveStudents();
-}
-
-function onEnter(selector, callback) {
-  $(selector).on('keypress', function (e) {
-       if(e.which === 13){
-          //Disable textbox to prevent multiple submit
-          $(this).attr("disabled", "disabled");
-          //Do Stuff, submit, etc..
-          callback()
-          //Enable the textbox again if needed.
-          $(this).removeAttr("disabled");
-       }
- });
-}
-
-function onTextChange(selector, callback) {
-  $(selector).on('change keyup paste', function (e) {
-        callback();
-  });
 }
 
 function displayStudentIssues() {
@@ -108,8 +107,9 @@ function loadStudents(filePaths) {
       students = jsonfile.readFileSync(openedFilePath);
       dialog.showMessageBox({
           title: 'Loaded',
-          message: 'The file was successfully loaded.'
+          message: 'The students were successfully loaded.'
       });
+      ipcRenderer.send('studentsloaded');
       $('body').show();
     } catch(e) {
       dialog.showErrorBox('Not Loaded', 'The students could not be loaded.  Please try another file.');
@@ -143,7 +143,6 @@ function createDemoStudents(studentCount, schoolCount, minGrade, maxGrade) {
             groups: []
           };
   });
-  console.log(students, 'createDemoStudents')
   return students;
 }
 
@@ -292,11 +291,9 @@ function addStudentToGroup() {
       if (g.id == toGroupId) {
         if (!_.find(g.members, {id: selectedFoundStudentId})) {
           g.members.push({id: selectedFoundStudentId});
-
           g.members = _.map(_.sortBy(_.map(g.members, (gm) => {
             return _.find(students, {id: gm.id});
           }), ['first', 'last', 'id']), (gm) => { return {id: gm.id}; });
-
         }
       }
       return g;
@@ -312,6 +309,72 @@ function addStudentToGroup() {
 
   displayGroups();
   $('#searchStudentName').focus();
+}
+
+function exportSameGroupVectors(folderPaths) {
+  $('body').hide();
+  if (folderPaths !== null && folderPaths !== undefined && folderPaths.length > 0) {
+    let exportFolderPath = folderPaths[0];
+    console.log(exportFolderPath);
+
+    try {
+
+      let schools = _.sortBy(_.uniq(_.map(students, (s) => {return s.school;})));
+      let grades = _.sortBy(_.uniq(_.map(students, (s) => {return s.grade;})));
+
+      _.each(schools, (school) => {
+        _.each(grades, (grade) => {
+
+          let sameGroupVectors = getSameGroupVectors(school, grade);
+          console.log(sameGroupVectors)
+          const sameGroupsJsonFilePath = path.resolve(exportFolderPath, 'samegroups_school_' + school + '_grade_' + grade + '.json');
+          jsonfile.writeFileSync(sameGroupsJsonFilePath, sameGroupVectors, {spaces: 2, EOL: '\r\n'})
+
+        })
+      })
+      dialog.showMessageBox({
+          title: 'Exported',
+          message: 'The same group vectors were successfully exported.'
+      });
+    } catch(e) {
+      dialog.showErrorBox('Not Exported', 'The same group vectors could not be exported.  Please try another folder.');
+      exportedFolderPath = null;
+    }
+  } else {
+    dialog.showErrorBox('Not Exported', 'The same group vectors could not be exported.  Please try another folder.');
+  }
+  $('body').show();
+}
+
+function getSameGroupVectors(school, grade) {
+  let sgStudents = _.filter(students, (s) => {
+    return s.grade == grade && s.school == school;
+  });
+  let sgStudentIds = _.map(sgStudents, (s) => { return s.id; });
+
+  let sameGroupVectors = [];
+  _.each(students, (s) => {
+    let sameGroupVector = {};
+    let s_i = 0;
+    let s_j = 0;
+    for(s_i = 0;  s_i < sgStudentIds.length - 1; s_i++) {
+      for(s_j = s_i + 1;  s_j < sgStudentIds.length; s_j++) {
+        let sameGroupCount = _.isNil(s.groups) ? 0 : _.filter(s.groups, (g) => {
+          if (_.isNil(g.members)) {
+            return false;
+          } else {
+            return _.findIndex(g.members, {id: sgStudentIds[s_i]}) >= 0
+              && _.findIndex(g.members, {id: sgStudentIds[s_j]}) >= 0;
+          }
+        }).length;
+        sameGroupVector[s_i + '_' + s_j] = sameGroupCount;
+        sameGroupVector['student_id'] = s.id;
+      }
+    }
+    sameGroupVectors.push(sameGroupVector);
+  })
+
+  return sameGroupVectors;
 }
 
 start();
