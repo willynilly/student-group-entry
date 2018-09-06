@@ -37,6 +37,10 @@ function start () {
 }
 
 function configureFormElements() {
+  $('#studentId').focus(() => {
+    saveStudents();
+    clearGotoStudent();
+  });
   onEnter($, '#studentId', gotoStudent)
   $('#gotoStudent').click(gotoStudent)
   onEnter($, '#searchStudentName', findStudent)
