@@ -12,12 +12,13 @@ const { onTextChange, onEnter } = require('./ui_helpers.js');
 
 const $ = window.$;
 
-// const studentsJsonFilePath = path.resolve(__dirname, 'data/students.json');
 let openedFilePath = null;
 let students = [];
 let student = null;
 
 function start () {
+  //saveDemoStudents();
+
   $().ready(() => {
 
     configureFormElements();
@@ -132,7 +133,22 @@ function saveStudent() {
   }
 }
 
-function createDemoStudents(studentCount, schoolCount, minGrade, maxGrade) {
+function saveDemoStudents() {
+  const demoStudentsJsonFilePath = path.resolve(__dirname, 'data/demo-students.json');
+
+  const studentCount = 100;
+  const schoolCount = 5;
+  const minGrade = 4;
+  const maxGrade = 5;
+  const maxGroupCount = 8;
+  const maxMemberCountPerGroup = 10;
+
+  const students = createRandomStudents(studentCount, schoolCount, minGrade, maxGrade, maxGroupCount, maxMemberCountPerGroup);
+  jsonfile.writeFileSync(demoStudentsJsonFilePath, students, {spaces: 2, EOL: '\r\n'})
+
+}
+
+function createRandomStudents(studentCount, schoolCount, minGrade, maxGrade, maxGroupCount, maxMemberCountPerGroup) {
   let students = _.times(studentCount, (i) => {
     return {
             id: i + '',
@@ -143,6 +159,13 @@ function createDemoStudents(studentCount, schoolCount, minGrade, maxGrade) {
             groups: []
           };
   });
+  _.each(students, (s) => {
+    let studentsInSchoolAndGrade = _.filter(students, (ss) => { return ss.grade == s.grade && ss.school == s.school;});
+    let numGroups = _.random(1, maxGroupCount);
+    s.groups = _.times(numGroups, (gId) => {
+        return {id: gId + '', members: _.map(_.sampleSize(studentsInSchoolAndGrade, _.random(2, maxMemberCountPerGroup)), (s) => { return {id: s.id}; })}
+    });
+  })
   return students;
 }
 
@@ -315,7 +338,6 @@ function exportSameGroupVectors(folderPaths) {
   $('body').hide();
   if (folderPaths !== null && folderPaths !== undefined && folderPaths.length > 0) {
     let exportFolderPath = folderPaths[0];
-    console.log(exportFolderPath);
 
     try {
 
@@ -326,7 +348,6 @@ function exportSameGroupVectors(folderPaths) {
         _.each(grades, (grade) => {
 
           let sameGroupVectors = getSameGroupVectors(school, grade);
-          console.log(sameGroupVectors)
           const sameGroupsJsonFilePath = path.resolve(exportFolderPath, 'samegroups_school_' + school + '_grade_' + grade + '.json');
           jsonfile.writeFileSync(sameGroupsJsonFilePath, sameGroupVectors, {spaces: 2, EOL: '\r\n'})
 
@@ -353,8 +374,8 @@ function getSameGroupVectors(school, grade) {
   let sgStudentIds = _.map(sgStudents, (s) => { return s.id; });
 
   let sameGroupVectors = [];
-  _.each(students, (s) => {
-    let sameGroupVector = {};
+  _.each(sgStudents, (s) => {
+    let sameGroupVector = {'student_id': s.id};
     let s_i = 0;
     let s_j = 0;
     for(s_i = 0;  s_i < sgStudentIds.length - 1; s_i++) {
@@ -367,8 +388,7 @@ function getSameGroupVectors(school, grade) {
               && _.findIndex(g.members, {id: sgStudentIds[s_j]}) >= 0;
           }
         }).length;
-        sameGroupVector[s_i + '_' + s_j] = sameGroupCount;
-        sameGroupVector['student_id'] = s.id;
+        sameGroupVector[sgStudentIds[s_i] + '_' + sgStudentIds[s_j]] = sameGroupCount;
       }
     }
     sameGroupVectors.push(sameGroupVector);
