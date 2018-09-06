@@ -84,7 +84,6 @@ function initializeView() {
   $('#targetGroupSection').hide();
 
   clearGotoStudent();
-  clearFindStudent();
 }
 
 function onWindowClose() {
@@ -187,6 +186,7 @@ function clearGotoStudent() {
   $('#studentId').val('');
   $('#studentIssues textarea').val('');
   $('#studentIssues').hide();
+  clearFindStudent();
 }
 
 function gotoStudent () {
@@ -288,9 +288,9 @@ function findStudent() {
         $('.foundStudent').first().click();
       }
     } else {
+      $('#searchStudentName').focus();
       $('#foundStudents').html('No students found.');
       $('#targetGroupSection').hide();
-      $('#searchStudentName').focus();
     }
   } else {
     clearFindStudent();
