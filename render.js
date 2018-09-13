@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const dateFormat = require('dateformat');
 const jsonfile = require('jsonfile');
 const dialog = require('electron').remote.dialog;
 const ipcRenderer = require('electron').ipcRenderer;
@@ -76,6 +77,17 @@ function configureMenus() {
     };
     dialog.showOpenDialog(openFileOptions, exportSameGroupVectors)
   });
+
+  ipcRenderer.on('reportgroups', function (event) {
+    completedCount = _.filter(students, (s) => {
+      return s.groups.length > 0
+    }).length;
+    dialog.showMessageBox({
+        title: 'Groups Report',
+        message: 'You have have groups for ' + completedCount + ' students out of ' + students.length + '.'
+    });
+  });
+
 }
 
 function initializeView() {
@@ -128,6 +140,7 @@ function saveStudent() {
   if (student !== null && student !== undefined) {
     students = _.map(students, (s) => {
       if (s.id == student.id) {
+        student['last_saved'] = Date.now();
         return student;
       } else {
         return s;
@@ -174,6 +187,11 @@ function createRandomStudents(studentCount, schoolCount, minGrade, maxGrade, max
 
 function saveStudents() {
   saveStudent();
+  _.each(students, (s) => {
+    if (_.isNil(s.last_saved)) {
+      s.last_saved = Date.now()
+    }
+  });
   if (openedFilePath !== null) {
     jsonfile.writeFileSync(openedFilePath, students, {spaces: 2, EOL: '\r\n'})
   }
@@ -196,6 +214,7 @@ function gotoStudent () {
     clearGotoStudent();
   } else {
     student = _.find(students, {id: studentId});
+    student['last_viewed'] = Date.now();
     if (student !== null && student !== undefined) {
       $('#groups').show();
       $('#addToGroup').show();
@@ -215,6 +234,9 @@ function displayStudentDescription () {
   html += '<div>Last Name: ' + student.last + '</div>';
   html += '<div>School: ' + student.school + '</div>';
   html += '<div>Grade Level: ' + student.grade + '</div>';
+  html += '<div>Last Viewed: ' + (_.isNil(student.last_viewed) ? '' : dateFormat(new Date(student.last_viewed))) + '</div>';
+  html += '<div>Last Saved: ' + (_.isNil(student.last_saved) ? '' : dateFormat(new Date(student.last_saved)))  + '</div>';
+
   $('#studentDescription').html(html);
 }
 

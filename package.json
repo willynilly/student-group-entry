@@ -16,6 +16,7 @@
 	},
 	"dependencies": {
 		"csvtojson": "^2.0.8",
+		"dateformat": "^3.0.3",
 		"jquery": "^3.3.1",
 		"jsonfile": "^4.0.0",
 		"lodash": "^4.17.10",

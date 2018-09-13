@@ -51,6 +51,19 @@ const {app, BrowserWindow, Menu, ipcMain} = require('electron')
         ]
       },
       {
+        label: 'Report',
+        submenu: [
+          {
+            id: 'reportgroups',
+            label: 'Groups',
+            enabled: false,
+            click: () => {
+              win.webContents.send('reportgroups');
+            }
+          }
+        ]
+      },
+      {
         label: 'Help',
         submenu: [
           {
@@ -68,6 +81,7 @@ const {app, BrowserWindow, Menu, ipcMain} = require('electron')
 
   function enableMenuItemsAfterLoaded() {
     Menu.getApplicationMenu().getMenuItemById('exportsamegroupvectors').enabled = true;
+    Menu.getApplicationMenu().getMenuItemById('reportgroups').enabled = true;
   }
 
   // This method will be called when Electron has finished
